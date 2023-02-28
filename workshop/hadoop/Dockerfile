@@ -20,6 +20,8 @@ RUN cd /opt && \
     rm ${HADOOP_PACKAGE}.tar.gz && \
     chown -R ${HADOOP_USER}:${HADOOP_USER} ${HADOOP_HOME}
 
+RUN mkdir /var/run/sshd && chmod 0755 /var/run/sshd && /usr/bin/ssh-keygen -A && /etc/init.d/ssh start && ls -l /etc/ssh/ssh_host_*key
+
 USER ${HADOOP_USER}
 WORKDIR ${HADOOP_HOME}
 
@@ -41,3 +43,7 @@ RUN ssh-keygen -t rsa -q -f "/home/${HADOOP_USER}/.ssh/id_rsa" -N "" && \
     echo export JAVA_HOME=${JAVA_HOME} >> ${HADOOP_HOME}/etc/hadoop/hadoop-env.sh && \
     sed -i "s|\${HADOOP_HOME}|${HADOOP_HOME}|g" ${HADOOP_HOME}/etc/hadoop/hdfs-site.xml && \
     bash -c 'mkdir -pv data/hdfs/{namenode,datanode}'  # https://github.com/moby/moby/issues/13011
+
+EXPOSE 9870 9000
+
+ENTRYPOINT /usr/sbin/sshd -D && hadoop namenode -format && sbin/start-dfs.sh
